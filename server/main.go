@@ -143,17 +143,51 @@ func getTrainLineLocations(l Line) (*LocationsResponse, error) {
 	return &responseObject, nil
 }
 
+// getTrainLocationsAllLines returns the current locations of all trains across all lines
+func getAllTrainLocationsAllLines() (*LocationsResponse, error) {
+	// implement return functionality and making api request below
+	var req strings.Builder
+	req.WriteString("http://lapi.transitchicago.com/api/1.0/ttpositions.aspx?key=")
+	var apiKey string = os.Getenv("CTA_API_KEY")
+	req.WriteString(apiKey)
+	req.WriteString("&rt=blue,brn,g,org,pink,p,red,y&outputType=JSON")
+
+	// Get request
+	res, err := http.Get(req.String())
+	if err != nil {
+		fmt.Print(err.Error())
+		return nil, err
+	}
+	responseData, err := ioutil.ReadAll(res.Body)
+	if err != nil {
+		fmt.Print(err.Error())
+		return nil, err
+	}
+	// Unmarshall the returned JSON string into variable
+	var responseObject LocationsResponse
+	json.Unmarshal(responseData, &responseObject)
+	return &responseObject, nil
+}
+
 // getTrainLineLocation returns a map with Line as the key, and Train as the type.
 // This map consists of train locations per line type.
 func getAllTrainLocations() (map[Line][]Train, error) {
 	res := make(map[Line][]Train)
-	for i := Line(1); i < Yellow+1; i++ {
-		responseObject, err := getTrainLineLocations(i)
-		if err != nil {
-			return nil, err
-		}
-		res[i] = responseObject.Tracker.Route[0].Trains
+	resObj, err := getAllTrainLocationsAllLines()
+	if err != nil {
+		return nil, err
 	}
+
+	// Expected order: blue,brn,g,org,pink,p,red,y
+	res[Blue] = resObj.Tracker.Route[0].Trains
+	res[Brown] = resObj.Tracker.Route[1].Trains
+	res[Green] = resObj.Tracker.Route[2].Trains
+	res[Orange] = resObj.Tracker.Route[3].Trains
+	res[Pink] = resObj.Tracker.Route[4].Trains
+	res[Purple] = resObj.Tracker.Route[5].Trains
+	res[Red] = resObj.Tracker.Route[6].Trains
+	res[Yellow] = resObj.Tracker.Route[7].Trains
+
 	return res, nil
 }
 
@@ -162,13 +196,21 @@ func getAllTrainLocations() (map[Line][]Train, error) {
 // a station.
 func getAllTrainLocationsArriving() (map[Line][]Train, error) {
 	res := make(map[Line][]Train)
-	for i := Line(1); i < Yellow+1; i++ {
-		responseObject, err := getTrainLineLocations(i)
-		if err != nil {
-			return nil, err
-		}
-		res[i] = responseObject.Tracker.Route[0].filterOnlyApproaching()
+	resObj, err := getAllTrainLocationsAllLines()
+	if err != nil {
+		return nil, err
 	}
+
+	// Expected order: blue,brn,g,org,pink,p,red,y
+	res[Blue] = resObj.Tracker.Route[0].filterOnlyApproaching()
+	res[Brown] = resObj.Tracker.Route[1].filterOnlyApproaching()
+	res[Green] = resObj.Tracker.Route[2].filterOnlyApproaching()
+	res[Orange] = resObj.Tracker.Route[3].filterOnlyApproaching()
+	res[Pink] = resObj.Tracker.Route[4].filterOnlyApproaching()
+	res[Purple] = resObj.Tracker.Route[5].filterOnlyApproaching()
+	res[Red] = resObj.Tracker.Route[6].filterOnlyApproaching()
+	res[Yellow] = resObj.Tracker.Route[7].filterOnlyApproaching()
+
 	return res, nil
 }
 
