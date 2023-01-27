@@ -26,7 +26,6 @@ def test_all_lines_leds(mc):
 if __name__ == "__main__":
     mainController = MainDriversController()
     while True:
-        # Poll API every 15 seconds.
         app_trains = fetch_approaching_trains()
         mainController.process_approaching_trains(app_trains)
         time.sleep(5)
