@@ -48,14 +48,19 @@ class MainDriversController:
     )
     last_processed_station_ids: List[str] = field(default_factory=lambda: [])
 
-    def remove_old_trains(self, new_station_ids):
-        to_be_removed = set(self.last_processed_station_ids).difference(set(new_station_ids))
-        print("Old:", to_be_removed)
-        for station_id in to_be_removed:
+    def process_stations(self, new_station_ids):
+        stations_to_be_shut_off = list(set(self.last_processed_station_ids) - set(new_station_ids))
+        stations_to_be_turned_on = list(set(new_station_ids) - set(self.last_processed_station_ids))
+        # print("Previous:", self.last_processed_station_ids)
+        # print("New:", new_station_ids)
+        # print("To Be Removed:", stations_to_be_shut_off)
+        # print("New Trimmed:", stations_to_be_turned_on)
+        for station_id in stations_to_be_shut_off:
             for driver in self.drivers:
                 if station_id in driver.station_to_channel:
                     driver.turn_off_LED(driver.station_to_channel[station_id])
         self.last_processed_station_ids = new_station_ids
+        return stations_to_be_turned_on
 
     def get_station_ids(self, approaching_trains):
         stations = []
@@ -68,8 +73,9 @@ class MainDriversController:
 
     def process_approaching_trains(self, approaching_trains):
         station_ids = self.get_station_ids(approaching_trains)
-        self.remove_old_trains(station_ids)
-        for station_id in station_ids:
+        new_station_ids = self.process_stations(station_ids)
+        # print("New Stations:", new_station_ids)
+        for station_id in new_station_ids:
             for driver in self.drivers:
                 if station_id in driver.station_to_channel:
                     print(
