@@ -24,7 +24,7 @@ class LedDriver:
     def turn_on_LED(self, channel: int):
         # Set channel PWM to max 4095
         channel_index = self.id * 24 + int(channel)
-        tlc5947[channel_index] = 4095
+        tlc5947[channel_index] = 512
 
     def turn_off_LED(self, channel: int):
         # Set channel PWM to min 0
@@ -81,3 +81,15 @@ class MainDriversController:
                     )
                     driver.turn_on_LED(driver.station_to_channel[station_id])
                     break
+
+    def turn_line_on(self, color):
+        for driver in self.drivers:
+            for key in driver.station_to_channel:
+                if color in key:
+                   driver.turn_on_LED(driver.station_to_channel[key])
+
+    def turn_line_off(self, color):
+        for driver in self.drivers:
+            for key in driver.station_to_channel:
+                if color in key:
+                   driver.turn_off_LED(driver.station_to_channel[key])
